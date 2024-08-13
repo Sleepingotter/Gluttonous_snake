@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        .bd {
+            width: 500px;
+            position: absolute;
+            transform: translateX(-50%) translateY(-50%);
+            left: 50%;
+            top: 50%
+        }
+
+        body {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-around;
+        }
+
+        span {
+            display: block;
+            width: 50px;
+            height: 50px;
+            background-color: skyblue;
+            border: 1px solid black;
+        }
+
+        .bdgreen {
+            background-color: green;
+        }
+
+        .bdblack {
+            background-color: black;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>当前积分</h1>
+    <br>
+    <h2></h2>
+    <br>
+    <div>使用wasd或者上下左右操作，按下esc可暂停游戏</div>
+    <div class="bd"></div>
+    <script>
+        let arr = new Array(10)
+        let h = document.querySelector("h1")
+        const h2 = document.querySelector("h2")
+        localStorage.getItem("")
+        h2.innerHTML = `最高分数为：${localStorage.getItem("score") || 0}分`
+        for (let i = 0; i < arr.length; i++) {
+            arr[i] = new Array(10)
+            for (let j = 0; j < arr[i].length; j++) {
+                arr[i][j] = 0
+            }
+        }
+
+        for (let i = 0; i < arr.length; i++) {
+            const div = document.createElement("div")
+            for (let j = 0; j < arr.length; j++) {
+                const span = document.createElement("span")
+                div.appendChild(span)
+            }
+            div.className = "row"
+            div.innerHTML += "<br>"
+            document.querySelector(".bd").appendChild(div)
+        }
+        const spanarr = document.querySelectorAll("span")
+
+        function rand() {
+            const x = parseInt(Math.random() * 10)
+            const y = parseInt(Math.random() * 10)
+            return { x, y }
+        }
+        function addReward() {
+            const { x, y } = rand()
+            spanarr[x * 10 + y].classList.add("bdgreen")
+            return { x, y }
+        }
+        function Location(x, y, lastX, lastY) {
+            this.x = x;
+            this.y = y;
+            this.lastX = lastX;
+            this.lastY = lastY;
+        }
+        let x = 0, y = 0;
+
+        let direction = { x: 0, y: 0 }
+        let hassnake = []
+        let reward
+        let score = 0
+        let sankeLength = 1
+        // 速度
+        let speed = 200;
+        const timer = setInterval(() => {
+            // 此时x和y保存上一次的位置信息
+            let lastX = x, lastY = y;
+            x += direction.x;
+            y += direction.y;
+            // console.log("当前蛇头在：", x, y)
+            if (x >= 10 || x < 0 || y >= 10 || y < 0) {
+                alert("游戏结束")
+                localStorage.setItem("score", score)
+                clearInterval(timer)
+                init()
+                location.reload()
+            }
+            console.log("snake:")
+            for (let i = 0; i < sankeLength; i++) {
+                for (let j = 0; j < sankeLength; j++) {
+                    if (i == j)
+                        continue;
+                    if (hassnake[i].x == hassnake[j].x && hassnake[i].y == hassnake[j].y) {
+                        alert("游戏结束")
+                        localStorage.setItem("score", score)
+
+                        clearInterval(timer)
+                        init()
+                        location.reload()
+                    }
+                }
+            }
+            //每一个元素都要获取前一个元素信息，
+            for (let i = sankeLength - 1; i >= 1; i--) {
+                if (i == sankeLength - 1) {
+                    lastX = hassnake[i].x;
+                    lastY = hassnake[i].y
+                }
+                hassnake[i].x = hassnake[i - 1].x;
+                hassnake[i].y = hassnake[i - 1].y;
+            }
+            //头部的信息
+            hassnake[0].x = x;
+            hassnake[0].y = y;
+            hassnake[sankeLength - 1].lastX = lastX
+            hassnake[sankeLength - 1].lastY = lastY
+            for (let i = 0; i < 100; i++) {
+                spanarr[i].classList.remove("bdblack")
+            }
+            spanarr[reward.x * 10 + reward.y].classList.add("bdgreen")
+            for (let i = 0; i < sankeLength; i++) {
+                spanarr[hassnake[i].x * 10 + hassnake[i].y].classList.add("bdblack")
+            }
+
+
+            if (x == reward.x && y == reward.y) {
+                spanarr[x * 10 + y].classList.remove("bdgreen")
+                reward = addReward()
+                const Controls = new Location(hassnake[sankeLength - 1].lastX, hassnake[sankeLength - 1].lastY, 0, 0)
+
+                hassnake.push(Controls)
+                score += 1
+                h.innerHTML = `当前积分：${score}`
+                sankeLength += 1
+
+            }
+        }, speed)
+        function init() {
+            reward = addReward()
+            spanarr[0].classList.add("bdblack")
+            direction = { x: 0, y: 0 }
+            his = []
+            score = 0
+            sankeLength = 1
+            h.innerHTML = `当前积分：${score}分`
+            hassnake = []
+            const init = new Location(0, 0, 0, 0)
+            hassnake.push(init)
+        }
+        init()
+        window.addEventListener("keyup", function (e) {
+            console.log(e)
+
+            if (e.code == "KeyW" || e.code == "ArrowUp") {
+                direction = { x: -1, y: 0 }
+            }
+            if (e.code == "KeyD" || e.code == "ArrowRight") {
+                direction = { x: 0, y: 1 }
+            }
+            if (e.code == "KeyS" || e.code == "ArrowDown") {
+                direction = { x: 1, y: 0 }
+            }
+            if (e.code == "KeyA" || e.code == "ArrowLeft") {
+                direction = { x: 0, y: -1 }
+            }
+            if (e.code == "Escape") {
+                direction = { x: 0, y: 0 }
+            }
+        })
+    </script>
+</body>
+
+</html>
